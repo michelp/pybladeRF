@@ -48,7 +48,7 @@ def get_sampling(dev):
 @cdef('int bladerf_get_sample_rate(struct bladerf *dev, bladerf_module module, unsigned int *rate);')
 def get_sample_rate(dev, module):
     rate = ffi.new('unsigned int *')
-    err = _cffi.lib.bladerf_get_sample_rate(dev, module)
+    err = _cffi.lib.bladerf_get_sample_rate(dev, module, rate)
     bladeRF.errors.check_retcode(err)
     return int(rate[0])
 
