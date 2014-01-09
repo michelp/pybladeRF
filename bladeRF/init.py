@@ -20,17 +20,22 @@ def get_device_list():
     return (size, devices)
 
 
-cdef('int bladerf_open('
-     'struct bladerf **device, '
-     'const char *device_identifier);')
-cdef('void bladerf_close(struct bladerf *device);')
+@cdef('int bladerf_open(struct bladerf **device, '
+      'const char *device_identifier);')
+def open(device_identifier=''):
+    device = ptop('struct bladerf')
+    err = _cffi.lib.bladerf_open(device, device_identifier)
+    bladeRF.errors.check_retcode(err)
+    return device
+
+
+@cdef('void bladerf_close(struct bladerf *device);')
+def close(device):
+    _cffi.lib.bladerf_close(device)
+
 
 @contextmanager
-def open(device_identifier=''):
-        device = ptop('struct bladerf')
-        err = _cffi.lib.bladerf_open(device, device_identifier)
-        bladeRF.errors.check_retcode(err)
-        yield device[0]
-        _cffi.lib.bladerf_close(device[0])
-
-
+def open_device(device_identifier=''):
+    device = open(device_identifier)
+    yield device[0]
+    close(device[0])

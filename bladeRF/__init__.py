@@ -2,6 +2,8 @@ from ._cffi import ffi, ptop
 
 from .init import (
     open,
+    close,
+    open_device,
     get_device_list,
     free_device_list,
     )

@@ -25,8 +25,13 @@ errors = {
     _cffi.lib.BLADERF_ERR_CHECKSUM: ChecksumError,
 }
 
+def strerror(error):
+    return _cffi.ffi.string(_cffi.lib.bladerf_strerror(error))
+
+
 def check_retcode(code, *args, **kwargs):
     if code < 0:
         if code not in errors:
             raise TypeError('No such retcode %s' % code)
-        raise errors[code](*args, **kwargs)
+        raise errors[code](strerror(code))
+

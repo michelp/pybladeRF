@@ -6,6 +6,8 @@ from cffi import FFI
 lib = None
 ffi = FFI()
 
+ffi.cdef('const char * bladerf_strerror(int error);')
+
 ffi.cdef("""
 #define BLADERF_ERR_UNEXPECTED ...
 #define BLADERF_ERR_RANGE ...
