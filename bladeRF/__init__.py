@@ -98,3 +98,4 @@ from .errors import (
     ChecksumError,
     )
     
+from device import Device

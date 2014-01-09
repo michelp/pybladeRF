@@ -1,4 +1,6 @@
 *.py[cod]
+*~
+.virt/
 
 # C extensions
 *.so
