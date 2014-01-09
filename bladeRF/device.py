@@ -7,6 +7,12 @@ class Module(object):
         self.device = device
         self.module = module
 
+    def __call__(self, *args, **kwargs):
+        if self.module == bladeRF.MODULE_RX:
+            return bladeRF.rx(self.device, *args, **kwargs)
+        elif self.module == bladeRF.MODULE_TX:
+            return bladeRF.tx(self.device, *args, **kwargs)
+
     @property
     def frequency(self):
         return bladeRF.get_frequency(self.device, self.module)

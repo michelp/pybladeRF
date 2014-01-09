@@ -17,7 +17,7 @@ def test_device():
     device.tx.sample_rate = 2**20
     assert device.tx.sample_rate == 2**20
     
-    samples = bladeRF.rx(device.device, bladeRF.FORMAT_SC16_Q12, 1024)
+    samples = device.rx(bladeRF.FORMAT_SC16_Q12, 1024)
     assert isinstance(samples, bytearray)
     assert len(samples) == 4096
     
