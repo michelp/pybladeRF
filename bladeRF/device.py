@@ -37,6 +37,14 @@ class Module(object):
     def sample_rate(self, sample_rate):
         bladeRF.set_sample_rate(self.device, self.module, sample_rate)
 
+    @property
+    def transfer_timeout(self):
+        return bladeRF.get_transfer_timeout(self.device, self.module)
+
+    @transfer_timeout.setter
+    def transfer_timeout(self, timeout):
+        bladeRF.set_transfer_timeout(self.device, self.module, timeout)
+
 
 class Device(object):
 

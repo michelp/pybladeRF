@@ -1,5 +1,6 @@
 import bladeRF
 
+
 def test_init():
 
     with bladeRF.open_device() as device:

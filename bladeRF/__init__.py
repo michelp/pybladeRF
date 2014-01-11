@@ -43,6 +43,11 @@ from .data import (
     rx,
     )
 
+from .low_level import (
+    get_transfer_timeout,
+    set_transfer_timeout,
+    )
+
 import bladeRF._cffi
 
 # compilation happens here in verify(),

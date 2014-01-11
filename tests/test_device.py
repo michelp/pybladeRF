@@ -1,5 +1,6 @@
 import bladeRF
 
+
 def test_device():
     device = bladeRF.Device()
 
@@ -7,8 +8,10 @@ def test_device():
     assert device.rx.frequency == 2**28
     device.rx.bandwidth = 1500000
     assert device.rx.bandwidth == 1500000
-    device.rx.sample_rate = 2**20
-    assert device.rx.sample_rate == 2**20
+    device.rx.sample_rate = 2**21
+    assert device.rx.sample_rate == 2**21
+    device.rx.transfer_timeout = 10000
+    assert device.rx.transfer_timeout == 10000
 
     device.tx.frequency = 1234000000
     assert device.tx.frequency == 1234000000
