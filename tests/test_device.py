@@ -3,6 +3,8 @@ import bladeRF
 
 def test_device():
     device = bladeRF.Device()
+    device.rx.enabled = True
+    device.tx.enabled = True
 
     device.rx.frequency = 2**28
     assert device.rx.frequency == 2**28

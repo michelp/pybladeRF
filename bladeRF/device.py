@@ -14,6 +14,14 @@ class Module(object):
             return bladeRF.tx(self.device, *args, **kwargs)
 
     @property
+    def enabled(self):
+        return bladeRF.enable_module(self.device, self.module, True)
+
+    @enabled.setter
+    def enabled(self, enabled):
+        bladeRF.enable_module(self.device, self.module, enabled)
+
+    @property
     def frequency(self):
         return bladeRF.get_frequency(self.device, self.module)
 
@@ -50,6 +58,7 @@ class Device(object):
 
     def __init__(self, device_identifier=''):
         self._device = bladeRF.open(device_identifier)
+        bladeRF.enable_module(self.device, bladeRF.MODULE_RX, True)
 
     @property
     def device(self):

@@ -48,6 +48,10 @@ from .low_level import (
     set_transfer_timeout,
     )
 
+from .misc import (
+    log_set_verbosity,
+    )
+
 import bladeRF._cffi
 
 # compilation happens here in verify(),
@@ -88,6 +92,15 @@ LPF_BYPASSED = lib.BLADERF_LPF_BYPASSED
 LPF_DISABLED = lib.BLADERF_LPF_DISABLED
 
 FORMAT_SC16_Q12 = lib.BLADERF_FORMAT_SC16_Q12
+
+LOG_LEVEL_VERBOSE = lib.BLADERF_LOG_LEVEL_VERBOSE
+LOG_LEVEL_DEBUG = lib.BLADERF_LOG_LEVEL_DEBUG
+LOG_LEVEL_INFO = lib.BLADERF_LOG_LEVEL_INFO
+LOG_LEVEL_WARNING = lib.BLADERF_LOG_LEVEL_WARNING
+LOG_LEVEL_ERROR = lib.BLADERF_LOG_LEVEL_ERROR
+LOG_LEVEL_CRITICAL = lib.BLADERF_LOG_LEVEL_CRITICAL
+LOG_LEVEL_SILENT = lib.BLADERF_LOG_LEVEL_SILENT
+
 
 from .errors import (
     BladeRFException,
