@@ -7,8 +7,8 @@ Python CFFI wrapper around libbladeRF
 Install
 =======
 
-Obviously to start you'll need to have build and installed libbladeRF.
-See the nuand docs for that.  Next thing you'll need is a device.
+To start you'll need to have build and installed libbladeRF.  See the
+nuand docs for that.   You'll need a device too.
 
 On ubuntu, you'll need some packages to build pybladeRF:
 
@@ -17,8 +17,8 @@ On ubuntu, you'll need some packages to build pybladeRF:
 Source the 'bootstrap' script to create a local virtual environment
 where you can use the library.
 
-If you want to run the tests, 'pip install nose' in the virtual
-environment, then run 'nosetests'.  You should see happy dots.
+If you want to run the tests, do 'python setup.py test'
+
 
 Usage
 =====
