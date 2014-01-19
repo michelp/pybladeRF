@@ -61,7 +61,8 @@ struct bladerf_metadata {
 def callback(f):
     @ffi.callback('bladerf_stream_cb')
     def handler(dev, stream, meta, samples, num_samples, user_data):
-        return f(dev, stream, meta, samples, num_samples, ffi.from_handle(user_data))
+        user_data = ffi.from_handle(user_data)
+        return f(dev, stream, meta, samples, num_samples, user_data)
     return handler
 
 
@@ -76,12 +77,13 @@ int  bladerf_init_stream(struct bladerf_stream **stream,
                          size_t num_transfers,
                          void *user_data);
 """)
-def init_stream(dev, callback, num_buffers, format, num_samples, num_transfers, user_data):
-    stream = ffi.new('bladerf_stream*[1]')
-    buffers = ffi.new('void*[1][1]')
+def init_stream(dev, callback, num_buffers, format, num_samples, num_transfers,
+                user_data):
+    stream = ffi.new('struct bladerf_stream*[1]')
+    buffers = ffi.new('void**[1]')
     err = _cffi.lib.bladerf_init_stream(
         stream, dev, callback, buffers, num_buffers, format, num_samples,
-        num_transfers, ffi.new_handle(user_data))
+        num_transfers, user_data)
     bladeRF.errors.check_retcode(err)
     return (stream[0], buffers[0])
 

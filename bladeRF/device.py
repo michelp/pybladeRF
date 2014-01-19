@@ -1,4 +1,25 @@
+from threading import Thread
+from time import sleep
 import bladeRF
+
+
+class Stream(Thread):
+
+    def __init__(self, device, module, callback,
+                 num_buffers, format, num_samples,
+                 num_transfers, user_data=None):
+        print user_data
+        Thread.__init__(self)
+        self.device = device
+        self.module = module
+        self.callback = callback
+        self.user_data_handle = bladeRF.ffi.new_handle(user_data)
+        self.stream, self.buffers = bladeRF.init_stream(
+            self.device, callback, num_buffers, format,
+            num_samples, num_transfers, self.user_data_handle)
+
+    def run(self):
+        bladeRF.stream(self.stream, self.module)
 
 
 class Module(object):
@@ -53,12 +74,38 @@ class Module(object):
     def transfer_timeout(self, timeout):
         bladeRF.set_transfer_timeout(self.device, self.module, timeout)
 
+    def stream(self, callback, num_buffers, format, num_samples,
+               num_transfers, user_data=None):
+        print user_data
+        return Stream(self.device, self.module, callback,
+                      num_buffers, format, num_samples,
+                      num_transfers, user_data=user_data)
+        
+
 
 class Device(object):
 
     def __init__(self, device_identifier=''):
         self._device = bladeRF.open(device_identifier)
         bladeRF.enable_module(self.device, bladeRF.MODULE_RX, True)
+
+    @classmethod
+    def from_params(cls, device_identifier='',
+                    rx_frequency=1000000000, rx_bandwidth=7000000,
+                    rx_sample_rate=10000000, tx_frequency=1000000000,
+                    tx_bandwidth=7000000, tx_sample_rate=10000000):
+        device = cls(device_identifier)
+        if rx_frequency:
+            device.rx.enabled = True
+            device.rx.frequency = rx_frequency
+            device.rx.bandwidth = rx_bandwidth
+            device.rx.sample_rate = rx_sample_rate
+        if tx_frequency:
+            device.tx.enabled = True
+            device.tx.frequency = tx_frequency
+            device.tx.bandwidth = tx_bandwidth
+            device.tx.sample_rate = tx_sample_rate
+        return device
 
     @property
     def device(self):
