@@ -55,6 +55,7 @@ struct bladerf_metadata {
     uint32_t version;       /**< Metadata format version */
     uint64_t timestamp;     /**< Timestamp (TODO format TBD) */
 };
+
 """)
 
 def callback(f):
@@ -98,8 +99,10 @@ def deinit_stream(stream):
 
 @cdef('int bladerf_tx(struct bladerf *dev, bladerf_format format,'
       'void *samples, int num_samples, struct bladerf_metadata *metadata);')
-def tx(dev, format, samples, num_samples, metadata):
-    err = _cffi.lib.bladerf_tx(dev, format, ffi.buffer(samples), num_samples, metadata)
+def tx(dev, format, samples, num_samples, metadata=None):
+    if metadata is None:
+        metadata = ffi.new('struct bladerf_metadata*')  #  currently unused
+    err = _cffi.lib.bladerf_tx(dev, format, str(samples), num_samples, metadata)
     bladeRF.errors.check_retcode(err)
 
 

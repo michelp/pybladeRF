@@ -14,9 +14,44 @@ On ubuntu, you'll need some packages to build pybladeRF:
 
   python-dev libffi-dev python-virtualenv
 
-Source the 'bootstrap' script to create a local virtual environment.
-Now you should be able to do:
+Source the 'bootstrap' script to create a local virtual environment
+where you can use the library.
 
-  python test.py
+If you want to run the tests, 'pip install nose' in the virtual
+environment, then run 'nosetests'.  You should see happy dots.
 
-if it returns no output, it worked!
+Usage
+=====
+
+Here's a brief example from a test:
+
+    import bladeRF
+
+    def test_device():
+	device = bladeRF.Device()
+	device.rx.enabled = True
+	device.tx.enabled = True
+
+	device.rx.frequency = 2**28
+	assert device.rx.frequency == 2**28
+	device.rx.bandwidth = 1500000
+	assert device.rx.bandwidth == 1500000
+	device.rx.sample_rate = 2**21
+	assert device.rx.sample_rate == 2**21
+	device.rx.transfer_timeout = 10000
+	assert device.rx.transfer_timeout == 10000
+
+	device.tx.frequency = 1234000000
+	assert device.tx.frequency == 1234000000
+	device.tx.bandwidth = 1500000
+	assert device.tx.bandwidth == 1500000
+	device.tx.sample_rate = 2**20
+	assert device.tx.sample_rate == 2**20
+
+	samples = device.rx(bladeRF.FORMAT_SC16_Q12, 1024)
+	assert isinstance(samples, bytearray)
+	assert len(samples) == 4096
+
+	device.tx(bladeRF.FORMAT_SC16_Q12, samples, 1024)
+
+

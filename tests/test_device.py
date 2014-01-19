@@ -25,4 +25,5 @@ def test_device():
     samples = device.rx(bladeRF.FORMAT_SC16_Q12, 1024)
     assert isinstance(samples, bytearray)
     assert len(samples) == 4096
-    
+
+    device.tx(bladeRF.FORMAT_SC16_Q12, samples, 1024)
