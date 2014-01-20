@@ -6,44 +6,42 @@ NULL  = bladeRF.ffi.NULL
 
 @bladeRF.callback
 def rx_callback(device, stream, meta_data,
-                samples, num_samples, user_data):
-    self = user_data
-    with self.lock:
-        with self.samples_available:
-            if self.rx_idx < 0:
-                return NULL
-            ret = self.rx_stream.buffers[self.rx_idx]
-            self.rx_idx += 1
-            if self.rx_idx >= self.num_buffers:
-                self.rx_idx = 0;
+                samples, num_samples, repeater):
 
-            if self.num_filled >= 2 * self.num_buffers:
-                print "RX Overrun encountered. Terminating RX task."
-                return NULL
+    with repeater.samples_available:
+        if repeater.rx_idx < 0:
+            return NULL
+        ret = repeater.rx_stream.buffers[repeater.rx_idx]
+        repeater.rx_idx += 1
+        if repeater.rx_idx >= repeater.num_buffers:
+            repeater.rx_idx = 0;
 
-            self.num_filled += 1
-            self.samples_available.notify()
+        if repeater.num_filled >= 2 * repeater.num_buffers:
+            print "RX Overrun encountered. Terminating RX task."
+            return NULL
+
+        repeater.num_filled += 1
+        repeater.samples_available.notify()
     return ret
 
 
 @bladeRF.callback
 def tx_callback(device, stream, meta_data,
-                samples, num_samples, user_data):
-    self = user_data
-    with self.lock:
-        if self.tx_idx < 0:
+                samples, num_samples, repeater):
+    with repeater.samples_available:
+        if repeater.tx_idx < 0:
             return NULL
 
-        if self.num_filled == 0:
+        if repeater.num_filled == 0:
             print "TX underrun encountered. Terminating TX task."
             return NULL
-        ret = self.rx_stream.buffers[self.tx_idx]
-        self.tx_idx += 1
+        ret = repeater.rx_stream.buffers[repeater.tx_idx]
+        repeater.tx_idx += 1
 
-        if self.tx_idx >= self.num_buffers:
-            self.tx_idx = 0;
+        if repeater.tx_idx >= repeater.num_buffers:
+            repeater.tx_idx = 0;
 
-        self.num_filled -= 1
+        repeater.num_filled -= 1
     return ret
 
 
@@ -61,7 +59,6 @@ class Repeater(object):
         self.num_filled = 0
         self.num_buffers = num_buffers
         self.prefill_count = num_transfers + (num_buffers - num_transfers) / 2
-        self.lock = threading.Lock()
         self.samples_available = threading.Condition()
 
         self.rx_stream = self.device.rx.stream(
@@ -81,8 +78,8 @@ class Repeater(object):
                 self.samples_available.wait()
 
         self.tx_stream.start()
-        i = raw_input('Repeater is running, press any key to exit... ')
-        with self.lock:
+        i = raw_input('Repeater is running, press enter to exit... ')
+        with self.samples_available:
             self.rx_idx = -1
             self.tx_idx = -1
         sys.exit(0)
