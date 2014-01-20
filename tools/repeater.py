@@ -51,15 +51,11 @@ class Repeater(object):
         self.prefill_count = num_transfers + (num_buffers - num_transfers) / 2
         self.samples_available = threading.Condition()
 
-        self.rx_stream = self.device.rx.stream(
-            rx_callback, num_buffers,
-            bladeRF.FORMAT_SC16_Q12,
-            samples_per_buffer, num_transfers, self)
+        self.rx_stream = self.device.rx.stream(rx_callback, num_buffers,
+            bladeRF.FORMAT_SC16_Q12, samples_per_buffer, num_transfers, self)
 
-        self.tx_stream = self.device.tx.stream(
-            tx_callback,  num_buffers,
-            bladeRF.FORMAT_SC16_Q12,
-            samples_per_buffer, num_transfers, self)
+        self.tx_stream = self.device.tx.stream(tx_callback,  num_buffers,
+            bladeRF.FORMAT_SC16_Q12, samples_per_buffer, num_transfers, self)
 
     def run(self):
         self.rx_stream.start()
