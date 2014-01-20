@@ -63,8 +63,8 @@ class Repeater(object):
 
     def run(self):
         self.rx_stream.start()
-        with self.samples_available:
-            while self.num_filled < self.prefill_count and self.tx_idx >= 0:
+        while self.num_filled < self.prefill_count and self.tx_idx >= 0:
+            with self.samples_available:
                 self.samples_available.wait()
         self.tx_stream.start()
         i = raw_input('Repeater is running, press enter to exit... ')
