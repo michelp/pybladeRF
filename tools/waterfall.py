@@ -10,10 +10,11 @@ def rx_callback(device, stream, meta_data,
     self = user_data
 
     if self.rx_idx < 0:
+        print 'negative'
         return bladeRF.ffi.NULL
 
-    self.rx_idx += 1
     ret = self.rx_stream.buffers[self.rx_idx]
+    self.rx_idx += 1
     if self.rx_idx >= self.num_buffers:
         self.rx_idx = 0;
 

@@ -10,8 +10,8 @@ def rx_callback(device, stream, meta_data,
         with self.samples_available:
             if self.rx_idx < 0:
                 return
-            self.rx_idx += 1
             ret = self.rx_stream.buffers[self.rx_idx]
+            self.rx_idx += 1
             if self.rx_idx >= self.num_buffers:
                 self.rx_idx = 0;
 
@@ -21,7 +21,6 @@ def rx_callback(device, stream, meta_data,
 
             self.num_filled += 1
             self.samples_available.notify()
-    print 'beep'
     return ret
 
 
@@ -36,14 +35,13 @@ def tx_callback(device, stream, meta_data,
         if self.num_filled == 0:
             print "TX underrun encountered. Terminating TX task."
             return
-        self.tx_idx += 1
         ret = self.rx_stream.buffers[self.tx_idx]
+        self.tx_idx += 1
 
         if self.tx_idx >= self.num_buffers:
             self.tx_idx = 0;
 
         self.num_filled -= 1
-    print 'boop'
     return ret
 
 
