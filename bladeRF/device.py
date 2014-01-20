@@ -87,7 +87,6 @@ class Device(object):
 
     def __init__(self, device_identifier=''):
         self._device = bladeRF.open(device_identifier)
-        bladeRF.enable_module(self.device, bladeRF.MODULE_RX, True)
 
     @classmethod
     def from_params(cls, device_identifier='',

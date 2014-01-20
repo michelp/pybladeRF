@@ -6,21 +6,22 @@ import threading
 @bladeRF.callback
 def rx_callback(device, stream, meta_data,
                 samples, num_samples, user_data):
+    print 'boop'
     self = user_data
-    with self.samples_available:
-        if self.rx_idx < 0:
-            return
-        self.rx_idx += 1
-        ret = self.rx_stream.buffers[self.rx_idx]
-        if self.rx_idx >= self.num_buffers:
-            self.rx_idx = 0;
 
-        if self.num_filled >= 2 * self.num_buffers:
-            print "RX Overrun encountered. Terminating RX task."
-            return
+    if self.rx_idx < 0:
+        return bladeRF.ffi.NULL
 
-        self.num_filled += 1
-        self.samples_available.notify()
+    self.rx_idx += 1
+    ret = self.rx_stream.buffers[self.rx_idx]
+    if self.rx_idx >= self.num_buffers:
+        self.rx_idx = 0;
+
+    if self.num_filled >= 2 * self.num_buffers:
+        print "RX Overrun encountered. Terminating RX task."
+        return bladeRF.ffi.NULL
+
+    self.num_filled += 1
     return ret
 
 
@@ -31,7 +32,12 @@ class Waterfall(object):
                  samples_per_buffer=8192,
                  num_buffers=32):
 
+        bladeRF.log_set_verbosity(bladeRF.LOG_LEVEL_VERBOSE)
         self.device = bladeRF.Device.from_params(device_indentifier, **config)
+
+        self.rx_idx = 0
+        self.num_filled = 0
+        self.num_buffers = num_buffers
 
         self.rx_stream = self.device.rx.stream(
             rx_callback, num_buffers,
@@ -48,5 +54,5 @@ if __name__ == '__main__':
     config = {
         # defaults for now
         }
-    r = Repeater('', config)
+    r = Waterfall('', config)
     r.run()

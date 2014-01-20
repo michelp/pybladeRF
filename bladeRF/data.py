@@ -2,6 +2,13 @@ import bladeRF
 from bladeRF import _cffi
 from bladeRF._cffi import ffi, cdef, ptop
 
+has_numpy = True
+try:
+    import numpy as np
+except ImportError:
+    has_numpy = False
+
+
 cdef("""
 typedef enum {
     BLADERF_FORMAT_SC16_Q12, /**< Signed, Complex 16-bit Q12.
@@ -118,3 +125,15 @@ def rx(dev, format, num_samples, metadata=None):
     bladeRF.errors.check_retcode(err)
     return bytearray(ffi.buffer(samples))
 
+
+def rx_np(dev, format, num_samples, metadata=None):
+    data = rx(dev, format, num_samples, metadata)
+
+    if has_numpy:
+        # use NumPy array
+        iq = np.empty(len(bytes)//2, 'complex')
+        iq.real, iq.imag = bytes[::2], bytes[1::2]
+        iq /= (255/2)
+        iq -= (1 + 1j)
+        return iq
+    raise NotImplementedError('install numpy.')
