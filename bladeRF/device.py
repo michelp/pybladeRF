@@ -8,7 +8,6 @@ class Stream(Thread):
     def __init__(self, device, module, callback,
                  num_buffers, format, num_samples,
                  num_transfers, user_data=None):
-        print user_data
         Thread.__init__(self)
         self.device = device
         self.module = module
@@ -76,7 +75,6 @@ class Module(object):
 
     def stream(self, callback, num_buffers, format, num_samples,
                num_transfers, user_data=None):
-        print user_data
         return Stream(self.device, self.module, callback,
                       num_buffers, format, num_samples,
                       num_transfers, user_data=user_data)

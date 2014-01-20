@@ -2,6 +2,8 @@ import sys
 import bladeRF
 import threading
 
+NULL  = bladeRF.ffi.NULL
+
 @bladeRF.callback
 def rx_callback(device, stream, meta_data,
                 samples, num_samples, user_data):
@@ -9,7 +11,7 @@ def rx_callback(device, stream, meta_data,
     with self.lock:
         with self.samples_available:
             if self.rx_idx < 0:
-                return
+                return NULL
             ret = self.rx_stream.buffers[self.rx_idx]
             self.rx_idx += 1
             if self.rx_idx >= self.num_buffers:
@@ -17,7 +19,7 @@ def rx_callback(device, stream, meta_data,
 
             if self.num_filled >= 2 * self.num_buffers:
                 print "RX Overrun encountered. Terminating RX task."
-                return
+                return NULL
 
             self.num_filled += 1
             self.samples_available.notify()
@@ -30,11 +32,11 @@ def tx_callback(device, stream, meta_data,
     self = user_data
     with self.lock:
         if self.tx_idx < 0:
-            return
+            return NULL
 
         if self.num_filled == 0:
             print "TX underrun encountered. Terminating TX task."
-            return
+            return NULL
         ret = self.rx_stream.buffers[self.tx_idx]
         self.tx_idx += 1
 
@@ -80,6 +82,9 @@ class Repeater(object):
 
         self.tx_stream.start()
         i = raw_input('Repeater is running, press any key to exit... ')
+        with self.lock:
+            self.rx_idx = -1
+            self.tx_idx = -1
         sys.exit(0)
 
 
