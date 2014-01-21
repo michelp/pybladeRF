@@ -6,23 +6,16 @@ import threading
 @bladeRF.callback
 def rx_callback(device, stream, meta_data,
                 samples, num_samples, user_data):
-    print 'boop'
     self = user_data
 
     if self.rx_idx < 0:
-        print 'negative'
-        return bladeRF.ffi.NULL
+        return
 
     ret = self.rx_stream.buffers[self.rx_idx]
     self.rx_idx += 1
     if self.rx_idx >= self.num_buffers:
-        self.rx_idx = 0;
+        self.rx_idx = 0
 
-    if self.num_filled >= 2 * self.num_buffers:
-        print "RX Overrun encountered. Terminating RX task."
-        return bladeRF.ffi.NULL
-
-    self.num_filled += 1
     return ret
 
 
@@ -37,7 +30,6 @@ class Waterfall(object):
         self.device = bladeRF.Device.from_params(device_indentifier, **config)
 
         self.rx_idx = 0
-        self.num_filled = 0
         self.num_buffers = num_buffers
 
         self.rx_stream = self.device.rx.stream(

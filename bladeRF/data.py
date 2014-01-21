@@ -69,7 +69,10 @@ def callback(f):
     @ffi.callback('bladerf_stream_cb')
     def handler(dev, stream, meta, samples, num_samples, user_data):
         user_data = ffi.from_handle(user_data)
-        return f(dev, stream, meta, samples, num_samples, user_data)
+        v = f(dev, stream, meta, samples, num_samples, user_data)
+        if v is None:
+            return ffi.NULL
+        return v
     return handler
 
 
