@@ -62,9 +62,32 @@ import bladeRF._cffi
 
 # http://explosm.net/comics/420/
 
+ffi.cdef("""
+float* samples_to_floats(void*, int);
+""")
+
 bladeRF._cffi.lib = lib = ffi.verify("""
 #include <libbladeRF.h>
+#include <stdlib.h>
+
+/* this helper function is to turn the two 16 bit ints per sample into
+ two normalized floats, so that it can be passed directly to
+ numpy.frombuffer which can only take two 32-bit floats and turn them
+ into a complex64 */
+
+float* samples_to_floats(void *samples, int num_samples) {
+    int i;
+    int16_t* data = (int16_t*)samples;
+    float* buffer = (float*)malloc(2 * num_samples * sizeof(float));
+    for (i = 0; i < num_samples; i++) {
+        buffer[i] = (float)data[i] * (1.0f/2048.0f);
+    }
+    return buffer;
+}
+    
 """, libraries=['bladeRF'])
+
+samples_to_floats = lib.samples_to_floats
 
 MODULE_TX = lib.BLADERF_MODULE_TX
 MODULE_RX = lib.BLADERF_MODULE_RX
