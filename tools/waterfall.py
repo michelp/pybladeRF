@@ -1,70 +1,68 @@
-from __future__ import division
-import sys
-import threading
-from Queue import Queue
+#    This file is copied from pyrlsdr.
+# conversion to pybladeRF by Michel Pelletier
 
+
+#    This file is part of pyrlsdr.
+#    Copyright (C) 2013 by Roger <https://github.com/roger-/pyrtlsdr>
+#
+#    pyrlsdr is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+
+#    pyrlsdr is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with pyrlsdr.  If not, see <http://www.gnu.org/licenses/>.
+
+
+from __future__ import division
 import matplotlib.animation as animation
 from matplotlib.mlab import psd
 import pylab as pyl
 import numpy as np
-
+import sys
 import bladeRF
 
-
-@bladeRF.callback
-def rx_callback(device, stream, meta_data,
-                samples, num_samples, user_data):
-    self = user_data
-
-    with self.lock:
-        if self.rx_idx < 0:
-            return
-
-        ret = self.rx_stream.buffers[self.rx_idx]
-        self.sample_q.put(bladeRF.samples_to_floats(ret, num_samples))
-
-        self.rx_idx += 1
-        if self.rx_idx >= self.num_buffers:
-            self.rx_idx = 0
-
-        return ret
-
+# A simple waterfall, spectrum plotter
+#
+# Controls:
+#
+# * Scroll mouse-wheel up or down, or press the left or right arrow keys, to
+#   change the center frequency (hold shift for finer control).
+# * Press "+" and "-" to control gain, and space to enable AGC.
+# * Type a frequency (in MHz) and press enter to directly change the center frequency
 
 NFFT = 1024*4
 NUM_SAMPLES_PER_SCAN = NFFT*16
 NUM_BUFFERED_SWEEPS = 100
 
+# change this to control the number of scans that are combined in a single sweep
+# (e.g. 2, 3, 4, etc.) Note that it can slow things down
 NUM_SCANS_PER_SWEEP = 1
 
+# these are the increments when scrolling the mouse wheel or pressing '+' or '-'
 FREQ_INC_COARSE = 1e6
 FREQ_INC_FINE = 0.1e6
 GAIN_INC = 5
 
-
 class Waterfall(object):
+    keyboard_buffer = []
+    shift_key_down = False
+    image_buffer = -100*np.ones((NUM_BUFFERED_SWEEPS,\
+                                 NUM_SCANS_PER_SWEEP*NFFT))
 
-    def __init__(self, device_indentifier, config,
-                 num_transfers=16,
-                 samples_per_buffer=NUM_SAMPLES_PER_SCAN,
-                 num_buffers=32):
+    def __init__(self, device_identifier='', fig=None):
+        self.fig = fig if fig else pyl.figure()
+        self.device = bladeRF.Device(device_identifier)
+        self.device.rx.enabled = True
 
-        self.image_buffer = -100*np.ones((NUM_BUFFERED_SWEEPS,
-                                          NUM_SCANS_PER_SWEEP*NFFT))
-        self.keyboard_buffer = []
-        self.shift_key_down = False
-        self.fig = pyl.figure()
-        self.lock = threading.Lock()
-        self.device = bladeRF.Device.from_params(device_indentifier, **config)
-        self.sample_q = Queue()
+        self.init_plot()
 
-        self.rx_idx = 0
-        self.num_buffers = num_buffers
-
-        self.rx_stream = self.device.rx.stream(
-            rx_callback, num_buffers,
-            bladeRF.FORMAT_SC16_Q12,
-            samples_per_buffer, num_transfers, self)
-
+    def init_plot(self):
         self.ax = self.fig.add_subplot(1,1,1)
         self.image = self.ax.imshow(self.image_buffer, aspect='auto',\
                                     interpolation='nearest', vmin=-50, vmax=10)
@@ -75,20 +73,21 @@ class Waterfall(object):
         self.fig.canvas.mpl_connect('key_press_event', self.on_key_press)
         self.fig.canvas.mpl_connect('key_release_event', self.on_key_release)
 
-    def run(self):
-        self.rx_stream.start()
-        ani = animation.FuncAnimation(self.fig, self.update, interval=1,
-                blit=True)
-        pyl.show()
-        with self.lock:
-            self.rx_idx = -1
-        sys.exit(0)
+    def update_plot_labels(self):
+        fc = self.device.rx.frequency
+        rs = self.device.rx.sample_rate
+        freq_range = (fc - rs/2)/1e6, (fc + rs*(NUM_SCANS_PER_SWEEP - 0.5))/1e6
+
+        self.image.set_extent(freq_range + (0, 1))
+        self.fig.canvas.draw_idle()
 
     def on_scroll(self, event):
         if event.button == 'up':
             self.device.rx.frequency += FREQ_INC_FINE if self.shift_key_down else FREQ_INC_COARSE
+            self.update_plot_labels()
         elif event.button == 'down':
             self.device.rx.frequency -= FREQ_INC_FINE if self.shift_key_down else FREQ_INC_COARSE
+            self.update_plot_labels()
 
     def on_key_press(self, event):
         if event.key == '+':
@@ -101,8 +100,26 @@ class Waterfall(object):
             self.shift_key_down = True
         elif event.key == 'right':
             self.device.rx.frequency += FREQ_INC_FINE if self.shift_key_down else FREQ_INC_COARSE
+            self.update_plot_labels()
         elif event.key == 'left':
             self.device.rx.frequency -= FREQ_INC_FINE if self.shift_key_down else FREQ_INC_COARSE
+            self.update_plot_labels()
+        elif event.key == 'enter':
+            # see if valid frequency was entered, then change center frequency
+            try:
+                # join individual key presses into a string
+                input = ''.join(self.keyboard_buffer)
+
+                # if we're doing multiple adjacent scans, we need to figure out
+                # the appropriate center freq for the leftmost scan
+                center_freq = float(input)*1e6 + (self.device.rx.sample_rate/2)*(1 - NUM_SCANS_PER_SWEEP)
+                self.device.rx.frequency = center_freq
+
+                self.update_plot_labels()
+            except ValueError:
+                pass
+
+            self.keyboard_buffer = []
         else:
             self.keyboard_buffer.append(event.key)
 
@@ -111,17 +128,56 @@ class Waterfall(object):
             self.shift_key_down = False
 
     def update(self, *args):
+        # save center freq. since we're gonna be changing it
+        start_fc = self.device.rx.frequency
+
+        # prepare space in buffer
+        # TODO: use indexing to avoid recreating buffer each time
         self.image_buffer = np.roll(self.image_buffer, 1, axis=0)
-        samples = np.frombuffer(bladeRF.ffi.buffer(self.sample_q.get(), NUM_SAMPLES_PER_SCAN*8), np.complex64)
-        psd_scan, f = psd(samples, NFFT=NFFT)
-        self.image_buffer[0 : NFFT] = 10*np.log10(psd_scan)
+
+        for scan_num, start_ind in enumerate(range(0, NUM_SCANS_PER_SWEEP*NFFT, NFFT)):
+            self.device.rx.frequency += self.device.rx.sample_rate*scan_num
+
+            # estimate PSD for one scan
+            data = self.device.rx(bladeRF.FORMAT_SC16_Q12, NUM_SAMPLES_PER_SCAN)
+            buff = bladeRF.ffi.buffer(bladeRF.samples_to_floats(data, NUM_SAMPLES_PER_SCAN), NUM_SAMPLES_PER_SCAN*8)
+            samples = np.frombuffer(buff, np.complex64)
+            psd_scan, f = psd(samples, NFFT=NFFT)
+
+            self.image_buffer[0, start_ind: start_ind+NFFT] = 10*np.log10(psd_scan)
+
+        # plot entire sweep
         self.image.set_array(self.image_buffer)
+
+        # restore original center freq.
+        self.device.rx.frequency = start_fc
+
         return self.image,
+
+    def start(self):
+        self.update_plot_labels()
+        if sys.platform == 'darwin':
+            # Disable blitting. The matplotlib.animation's restore_region()
+            # method is only implemented for the Agg-based backends,
+            # which the macosx backend is not.
+            blit = False
+        else:
+            blit = True
+        ani = animation.FuncAnimation(self.fig, self.update, interval=50,
+                blit=blit)
+
+        pyl.show()
+
+        return
+
+
+def main():
+    wf = Waterfall()
+    wf.device.rx.sample_rate = 2**21
+    wf.device.rx.frequency = 462622500
+    wf.device.rx.bandwidth = 1500000
+    wf.start()
 
 
 if __name__ == '__main__':
-    config = {
-        'rx_frequency': 462622500,
-        }
-    r = Waterfall('', config)
-    r.run()
+    main()

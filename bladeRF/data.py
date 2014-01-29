@@ -126,7 +126,7 @@ def rx(dev, format, num_samples, metadata=None):
     samples = ffi.new('int16_t[]', 2 * num_samples)
     err = _cffi.lib.bladerf_rx(dev, format, samples, num_samples, metadata)
     bladeRF.errors.check_retcode(err)
-    return bytearray(ffi.buffer(samples))
+    return samples
 
 
 def rx_np(dev, format, num_samples, metadata=None):

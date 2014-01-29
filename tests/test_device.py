@@ -21,8 +21,9 @@ def test_device():
     assert device.tx.bandwidth == 1500000
     device.tx.sample_rate = 2**20
     assert device.tx.sample_rate == 2**20
-    
-    samples = device.rx(bladeRF.FORMAT_SC16_Q12, 1024)
+
+    raw = device.rx(bladeRF.FORMAT_SC16_Q12, 1024)
+    samples = bytearray(bladeRF.ffi.buffer(raw))
     assert isinstance(samples, bytearray)
     assert len(samples) == 4096
 

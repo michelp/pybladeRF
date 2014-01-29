@@ -58,7 +58,7 @@ def set_loopback(dev, l):
       'bladerf_module module, unsigned int rate, unsigned int *actual);')
 def set_sample_rate(dev, module, rate):
     actual = ffi.new('unsigned int*')
-    err = _cffi.lib.bladerf_set_sample_rate(dev, module, rate, actual)
+    err = _cffi.lib.bladerf_set_sample_rate(dev, module, int(rate), actual)
     bladeRF.errors.check_retcode(err)
     return int(actual[0])
 
@@ -205,7 +205,7 @@ def select_band(dev, module, frequency):
 @cdef('int bladerf_set_frequency(struct bladerf *dev, '
       'bladerf_module module, unsigned int frequency);')
 def set_frequency(dev, module, frequency):
-    err = _cffi.lib.bladerf_set_frequency(dev, module, frequency)
+    err = _cffi.lib.bladerf_set_frequency(dev, module, int(frequency))
     bladeRF.errors.check_retcode(err)
 
 

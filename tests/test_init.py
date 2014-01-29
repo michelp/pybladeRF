@@ -17,6 +17,7 @@ def test_init():
         bladeRF.set_frequency(device, bladeRF.MODULE_RX, freq)
         assert bladeRF.get_frequency(device, bladeRF.MODULE_RX) == freq
 
-        samples = bladeRF.rx(device, bladeRF.FORMAT_SC16_Q12, 1024)
+        raw = bladeRF.rx(device, bladeRF.FORMAT_SC16_Q12, 1024)
+        samples = bytearray(bladeRF.ffi.buffer(raw))
         assert isinstance(samples, bytearray)
         assert len(samples) == 4096
