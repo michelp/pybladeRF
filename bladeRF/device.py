@@ -116,6 +116,10 @@ class Device(object):
     def tx(self):
         return Module(self.device, bladeRF.MODULE_TX)
 
+    @property
+    def fpga_size(self):
+        return bladeRF.get_fpga_size(self.device)
+
     def __del__(self):
         bladeRF.close(self.device)
 

@@ -52,6 +52,10 @@ from .misc import (
     log_set_verbosity,
     )
 
+from .info import (
+    get_fpga_size,
+    )
+
 import bladeRF._cffi
 
 # compilation happens here in verify(),
