@@ -35,7 +35,7 @@ from .ctrl import (
     )
 
 from .data import (
-    callback,
+    raw_callback,
     init_stream,
     stream,
     deinit_stream,
@@ -143,4 +143,7 @@ from .errors import (
     ChecksumError,
     )
     
-from device import Device
+from device import (
+    Device,
+    )
+

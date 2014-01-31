@@ -65,7 +65,7 @@ struct bladerf_metadata {
 
 """)
 
-def callback(f):
+def raw_callback(f):
     @ffi.callback('bladerf_stream_cb')
     def handler(dev, stream, meta, samples, num_samples, user_data):
         user_data = ffi.from_handle(user_data)

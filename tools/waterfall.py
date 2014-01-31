@@ -55,14 +55,11 @@ class Waterfall(object):
     image_buffer = -100*np.ones((NUM_BUFFERED_SWEEPS,\
                                  NUM_SCANS_PER_SWEEP*NFFT))
 
-    def __init__(self, device_identifier='', fig=None):
-        self.fig = fig if fig else pyl.figure()
+    def __init__(self, device_identifier=''):
+        self.fig = pyl.figure()
         self.device = bladeRF.Device(device_identifier)
         self.device.rx.enabled = True
 
-        self.init_plot()
-
-    def init_plot(self):
         self.ax = self.fig.add_subplot(1,1,1)
         self.image = self.ax.imshow(self.image_buffer, aspect='auto',\
                                     interpolation='nearest', vmin=-50, vmax=10)
