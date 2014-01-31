@@ -22,14 +22,15 @@ import sys
 import bladeRF
 from docopt import docopt
 
-def rx(device, stream, meta_data, samples, num_samples, user_data):
-    sys.stdout.write(bladeRF.ffi.buffer(samples, num_samples*4))
-    return stream.next()
-
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='bladeRF Receiver 1.0')
     outfile = sys.stdout if arguments['--file'] == '-' else open(arguments['--file'], 'wb')
+
+    def rx(device, stream, meta_data, samples, num_samples, user_data):
+        outfile.write(bladeRF.ffi.buffer(samples, num_samples*4))
+        return stream.next()
+
     device = bladeRF.Device.from_params(
         arguments['--device'],
         rx_frequency=int(arguments['<frequency>']),
