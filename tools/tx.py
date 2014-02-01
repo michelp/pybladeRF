@@ -28,7 +28,6 @@ if __name__ == '__main__':
     infile = sys.stdin if args['--file'] == '-' else open(args['--file'], 'rb')
 
     device = bladeRF.Device(args['--device'])
-
     device.tx.enabled = True
     device.tx.frequency = int(args['<frequency>'])
     device.tx.bandwidth = int(args['--bandwidth'])

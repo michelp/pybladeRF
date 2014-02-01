@@ -1,73 +1,110 @@
+"""\
+bladeRF Repeater
+
+Usage:
+  repeater.py <rx_frequency> <tx_frequency> [options]
+  repeater.py (-h | --help)
+  repeater.py --version
+
+Options:
+  -h --help                Show this screen.
+  -v --version             Show version.
+  -d --device=<d>          Device identifier [default: ]
+  -b --bandwidth=<bw>      Bandwidth in Hertz [default: 7000000].
+  -s --sample-rate=<sr>    Sample rate in samples per second [default: 10000000].
+  -n --num-buffers=<nb>    Number of transfer buffers [default: 32].
+  -t --num-transfers=<nt>  Number of transfers [default: 1].
+  -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 4096].
+  -g --lna-gain=<lg>       Set LNA gain [default: LNA_GAIN_MAX]
+  -q --squelch=<sq>        Set power squelch [default: 25]
+"""
 import sys
 import bladeRF
 import threading
-
-
-@bladeRF.callback
-def rx_callback(device, stream, meta_data, samples, num_samples, repeater):
-    with repeater.samples_available:
-        if repeater.rx_idx < 0:
-            return
-        ret = repeater.rx_stream.buffers[repeater.rx_idx]
-        repeater.rx_idx += 1
-        if repeater.rx_idx >= repeater.num_buffers:
-            repeater.rx_idx = 0
-        if repeater.num_filled >= 2 * repeater.num_buffers:
-            print "RX Overrun encountered. Terminating RX task."
-            return
-        repeater.num_filled += 1
-        repeater.samples_available.notify()
-    return ret
-
-
-@bladeRF.callback
-def tx_callback(device, stream, meta_data, samples, num_samples, repeater):
-    with repeater.samples_available:
-        if repeater.tx_idx < 0:
-            return
-        if repeater.num_filled == 0:
-            print "TX underrun encountered. Terminating TX task."
-            return
-        ret = repeater.rx_stream.buffers[repeater.tx_idx]
-        repeater.tx_idx += 1
-        if repeater.tx_idx >= repeater.num_buffers:
-            repeater.tx_idx = 0
-        repeater.num_filled -= 1
-    return ret
+from numpy import vdot, log10
+from docopt import docopt
 
 
 class Repeater(object):
 
-    def __init__(self, device_indentifier, config, num_transfers=16,
-                 samples_per_buffer=8192, num_buffers=32):
-
-        self.device = bladeRF.Device.from_params(device_indentifier, **config)
-        self.rx_idx = self.tx_idx = self.num_filled = 0
+    def __init__(self, num_buffers, num_transfers, num_samples):
+        self.zerobuf = bladeRF.ffi.new('int16_t[]', num_samples * 2)
         self.num_buffers = num_buffers
+        self.num_filled = 0
         self.prefill_count = num_transfers + (num_buffers - num_transfers) / 2
         self.samples_available = threading.Condition()
 
-        self.rx_stream = self.device.rx.stream(rx_callback, num_buffers,
-            bladeRF.FORMAT_SC16_Q12, samples_per_buffer, num_transfers, self)
-
-        self.tx_stream = self.device.tx.stream(tx_callback,  num_buffers,
-            bladeRF.FORMAT_SC16_Q12, samples_per_buffer, num_transfers, self)
-
-    def run(self):
-        self.rx_stream.start()
-        while self.num_filled < self.prefill_count and self.tx_idx >= 0:
-            with self.samples_available:
-                self.samples_available.wait()
-        self.tx_stream.start()
-        i = raw_input('Repeater is running, press enter to exit... ')
-        with self.samples_available:
-            self.rx_idx = self.tx_idx = -1
-        sys.exit(0)
-
 
 if __name__ == '__main__':
-    config = {
-        # defaults for now
-        }
-    r = Repeater('', config)
-    r.run()
+    args = docopt(__doc__, version='bladeRF Repeater 1.0')
+    device = bladeRF.Device(args['--device'])
+
+    device.rx.enabled = True
+    device.rx.frequency = int(args['<rx_frequency>'])
+    device.rx.bandwidth = int(args['--bandwidth'])
+    device.rx.sample_rate = int(args['--sample-rate'])
+    device.lna_gain = getattr(bladeRF, args['--lna-gain'])
+
+    device.tx.enabled = True
+    device.tx.frequency = int(args['<rx_frequency>'])
+    device.tx.bandwidth = int(args['--bandwidth'])
+    device.tx.sample_rate = int(args['--sample-rate'])
+
+    squelch = float(args['--squelch'])
+    num_buffers = int(args['--num-buffers'])
+    num_transfers = int(args['--num-transfers'])
+    num_samples = int(args['--num-samples'])
+
+    def rx(dev, stream, meta_data, samples, num_samples, repeater):
+        with repeater.samples_available:
+            if not stream.running:
+                return
+            data = bladeRF.samples_to_narray(samples, num_samples)
+            avgpwr = 10*log10(abs(vdot(data, data)))
+            if avgpwr < squelch:
+                return samples
+            ret = stream.next()
+            if repeater.num_filled >= 2 * repeater.num_buffers:
+                print "RX Overrun encountered. Terminating RX task."
+                return
+            repeater.num_filled += 1
+            repeater.samples_available.notify()
+        return ret
+
+    def tx(dev, stream, meta_data, samples, num_samples, repeater):
+        with repeater.samples_available:
+            if not stream.running:
+                return
+            if repeater.num_filled == 0:
+                return repeater.zerobuf
+            ret = stream.next()
+            repeater.num_filled -= 1
+        return ret
+
+    repeater = Repeater(num_buffers, num_transfers, num_samples)
+
+    rx_stream = device.rx.stream(
+        rx,
+        num_buffers,
+        bladeRF.FORMAT_SC16_Q12,
+        num_samples,
+        num_transfers,
+        repeater)
+
+    tx_stream = device.tx.stream(
+        tx,
+        num_buffers,
+        bladeRF.FORMAT_SC16_Q12,
+        num_samples,
+        num_transfers,
+        repeater)
+
+    tx_stream.buffers = rx_stream.buffers  # wire up tx buffers to rx
+
+    rx_stream.start()
+    tx_stream.start()
+
+    i = raw_input('Repeater is running, press enter to exit... ')
+    with repeater.samples_available:
+        rx_stream.running = tx_stream.running = False
+    sys.exit(0)
