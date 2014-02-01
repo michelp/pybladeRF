@@ -14,12 +14,14 @@ Options:
   -b --bandwidth=<bw>      Bandwidth in Hertz [default: 7000000].
   -s --sample-rate=<sr>    Sample rate in samples per second [default: 10000000].
   -n --num-buffers=<nb>    Number of transfer buffers [default: 32].
-  -t --num-transfers=<nt>  Number of transfers [default: 16].
+  -t --num-transfers=<nt>  Number of transfers [default: 1].
   -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 4096].
   -g --lna-gain=<lg>       Set LNA gain [default: LNA_GAIN_MAX]
+  -q --squelch=<sq>        Set power squelch [default: 41]
 """
 import sys
 import bladeRF
+from numpy import vdot, log10
 from docopt import docopt
 
 
@@ -34,13 +36,23 @@ if __name__ == '__main__':
     device.rx.bandwidth = int(args['--bandwidth'])
     device.rx.sample_rate = int(args['--sample-rate'])
     device.lna_gain = getattr(bladeRF, args['--lna-gain'])
+    squelch = float(args['--squelch'])
 
     def rx(device, stream, meta_data, samples, num_samples, user_data):
+        data = bladeRF.samples_to_narray(samples, num_samples)
+        avgpwr = 10*log10(abs(vdot(data, data)))
+        if avgpwr < squelch:
+            return samples
         outfile.write(bladeRF.ffi.buffer(samples, num_samples*4))
         return stream.next()
 
-    stream = device.rx.stream(rx, int(args['--num-buffers']), bladeRF.FORMAT_SC16_Q12,
-                              int(args['--num-samples']), int(args['--num-transfers']))
+    stream = device.rx.stream(
+        rx,
+        int(args['--num-buffers']),
+        bladeRF.FORMAT_SC16_Q12,
+        int(args['--num-samples']),
+        int(args['--num-transfers']))
+
     stream.run()
 
 
