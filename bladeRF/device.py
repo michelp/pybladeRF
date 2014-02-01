@@ -9,6 +9,7 @@ class Stream(Thread):
                  num_buffers, format, num_samples,
                  num_transfers, user_data=None):
         Thread.__init__(self)
+        self.running = True
         self.current = 0
         self.num_buffers = num_buffers
         self.device = device
@@ -19,7 +20,7 @@ class Stream(Thread):
             user_data = bladeRF.ffi.from_handle(user_data)
             v = callback(self.device, self, meta, samples, num_samples, user_data)
             if v is None:
-                return ffi.NULL
+                return bladeRF.ffi.NULL
             return v
 
         self.callback = callback
@@ -30,6 +31,8 @@ class Stream(Thread):
             num_samples, num_transfers, self.user_data_handle)
 
     def next(self):
+        if not self.running:
+            return
         ret = self.buffers[self.current]
         self.current += 1
         if self.current >= self.num_buffers:
@@ -141,6 +144,14 @@ class Device(object):
     @property
     def fpga_size(self):
         return bladeRF.get_fpga_size(self.raw_device)
+
+    @property
+    def lna_gain(self):
+        return bladeRF.get_lna_gain(self.raw_device)
+
+    @lna_gain.setter
+    def lna_gain(self, gain):
+        return bladeRF.set_lna_gain(self.raw_device, gain)
 
     def __del__(self):
         bladeRF.close(self.raw_device)

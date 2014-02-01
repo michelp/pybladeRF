@@ -1,5 +1,11 @@
 from ._cffi import ffi, ptop
 
+has_numpy = True
+try:
+    import numpy as np
+except ImportError:
+    has_numpy = False
+
 from .init import (
     open,
     close,
@@ -92,6 +98,11 @@ float* samples_to_floats(void *samples, int num_samples) {
 """, libraries=['bladeRF'])
 
 samples_to_floats = lib.samples_to_floats
+if has_numpy:
+    def samples_to_narray(samples, num_samples):
+        buff = bladeRF.ffi.buffer(samples_to_floats(samples, num_samples), num_samples*8)
+        return np.frombuffer(buff, np.complex64)
+        
 
 MODULE_TX = lib.BLADERF_MODULE_TX
 MODULE_RX = lib.BLADERF_MODULE_RX

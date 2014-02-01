@@ -137,8 +137,7 @@ class Waterfall(object):
 
             # estimate PSD for one scan
             data = self.device.rx(bladeRF.FORMAT_SC16_Q12, NUM_SAMPLES_PER_SCAN)
-            buff = bladeRF.ffi.buffer(bladeRF.samples_to_floats(data, NUM_SAMPLES_PER_SCAN), NUM_SAMPLES_PER_SCAN*8)
-            samples = np.frombuffer(buff, np.complex64)
+            samples = bladeRF.samples_to_narray(data, NUM_SAMPLES_PER_SCAN)
             psd_scan, f = psd(samples, NFFT=NFFT)
 
             self.image_buffer[0, start_ind: start_ind+NFFT] = 10*np.log10(psd_scan)
