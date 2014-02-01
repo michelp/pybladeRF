@@ -3,26 +3,52 @@ import weakref
 import bladeRF
 
 
+sample_size = bladeRF.ffi.sizeof('int16_t') * 2
+
+
 class Stream(Thread):
+    """
+    A bladeRF stream of data and a thread to process streams
+
+This condition from the documents still holds:
+
+ * When running a full-duplex configuration with two threads (e.g,
+ * one thread calling bladerf_stream() for TX, and another for RX), stream
+ * callbacks may be executed in either thread. Therefore, the caller is
+ * responsible for ensuring that his or her callbacks are thread-safe. For the
+ * same reason, it is highly recommended that callbacks do not block.
+    """
 
     def __init__(self, device, module, callback,
                  num_buffers, format, num_samples,
-                 num_transfers, user_data=None):
+                 num_transfers, user_data=None,
+                 as_complex=True):
         Thread.__init__(self)
         self.running = True
-        self.current = 0
+        self.current_buff = 0
         self.num_buffers = num_buffers
         self.device = device
         self.module = module
+        self.as_complex = as_complex
 
         @bladeRF.ffi.callback('bladerf_stream_cb')
-        def raw_callback(raw_device, raw_stream, meta, samples, num_samples, user_data):
+        def raw_callback(raw_device, raw_stream, meta, raw_samples, num_samples, user_data):
+            if self.as_complex:
+                samples = bladeRF.samples_to_narray(raw_samples, num_samples)
+            else:
+                samples = raw_samples
+
             user_data = bladeRF.ffi.from_handle(user_data)
             v = callback(self.device, self, meta, samples, num_samples, user_data)
             if v is None:
                 return bladeRF.ffi.NULL
+            # if it's the buffer we created, return the original raw one
+            # mutating the narray it has no effect if as_complex = True!
+            if v is samples:
+                return raw_samples
             return v
 
+        self.num_samples = num_samples
         self.callback = callback
         self.raw_callback = raw_callback
         self.user_data_handle = bladeRF.ffi.new_handle(user_data)
@@ -33,29 +59,30 @@ class Stream(Thread):
     def next(self):
         if not self.running:
             return
-        ret = self.buffers[self.current]
-        self.current += 1
-        if self.current >= self.num_buffers:
-            self.current = 0
+        ret = self.current()
+        self.current_buff += 1
+        if self.current_buff >= self.num_buffers:
+            self.current_buff = 0
         return ret
+
+    def current(self):
+        return self.buffers[self.current_buff]
+
+    def current_buffer(self):
+        return bladeRF.ffi.buffer(self.current(), self.num_samples*sample_size)
 
     def run(self):
         bladeRF.stream(self.raw_stream, self.module)
 
 
-
 class Module(object):
+    """ A module, either rx or tx.
+    """
 
     def __init__(self, device, module):
         self.device = device
         self.raw_device = device.raw_device
         self.module = module
-
-    def __call__(self, *args, **kwargs):
-        if self.module == bladeRF.MODULE_RX:
-            return bladeRF.rx(self.raw_device, *args, **kwargs)
-        elif self.module == bladeRF.MODULE_TX:
-            return bladeRF.tx(self.raw_device, *args, **kwargs)
 
     @property
     def enabled(self):

@@ -21,7 +21,6 @@ Options:
 """
 import sys
 import bladeRF
-from numpy import vdot, log10
 from docopt import docopt
 
 
@@ -39,11 +38,9 @@ if __name__ == '__main__':
     squelch = float(args['--squelch'])
 
     def rx(device, stream, meta_data, samples, num_samples, user_data):
-        data = bladeRF.samples_to_narray(samples, num_samples)
-        avgpwr = 10*log10(abs(vdot(data, data)))
-        if avgpwr < squelch:
-            return samples
-        outfile.write(bladeRF.ffi.buffer(samples, num_samples*4))
+        if bladeRF.squelched(samples, squelch):
+            return stream.current()
+        outfile.write(stream.current_buffer())
         return stream.next()
 
     stream = device.rx.stream(
@@ -51,7 +48,8 @@ if __name__ == '__main__':
         int(args['--num-buffers']),
         bladeRF.FORMAT_SC16_Q12,
         int(args['--num-samples']),
-        int(args['--num-transfers']))
+        int(args['--num-transfers']),
+        )
 
     stream.run()
 

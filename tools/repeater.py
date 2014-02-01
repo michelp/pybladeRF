@@ -105,6 +105,9 @@ if __name__ == '__main__':
     tx_stream.start()
 
     i = raw_input('Repeater is running, press enter to exit... ')
+
     with repeater.samples_available:
         rx_stream.running = tx_stream.running = False
+    rx_stream.join()
+    tx_stream.join()
     sys.exit(0)

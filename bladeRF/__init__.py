@@ -98,10 +98,14 @@ float* samples_to_floats(void *samples, int num_samples) {
 """, libraries=['bladeRF'])
 
 samples_to_floats = lib.samples_to_floats
+
+def to_float_buffer(raw_samples, num_samples):
+    return bladeRF.ffi.buffer(samples_to_floats(raw_samples, num_samples), num_samples*bladeRF.ffi.sizeof('float'))
+
+
 if has_numpy:
     def samples_to_narray(samples, num_samples):
-        buff = bladeRF.ffi.buffer(samples_to_floats(samples, num_samples), num_samples*8)
-        return np.frombuffer(buff, np.complex64)
+        return np.frombuffer(to_float_buffer(samples, num_samples), np.complex64)
         
 
 MODULE_TX = lib.BLADERF_MODULE_TX
@@ -157,4 +161,8 @@ from .errors import (
 from device import (
     Device,
     )
+
+
+def squelched(samples, level):
+    return 10*np.log10(np.abs(np.vdot(samples, samples))) < level
 
