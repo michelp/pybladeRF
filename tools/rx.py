@@ -17,7 +17,9 @@ Options:
   -t --num-transfers=<nt>  Number of transfers [default: 1].
   -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 4096].
   -g --lna-gain=<lg>       Set LNA gain [default: LNA_GAIN_MAX]
-  -q --squelch=<sq>        Set power squelch [default: 41]
+  -o --vga1-gain=<lg>      Set vga1 [default: 21]
+  -w --vga2-gain=<sq>      Set vga2 squelch [default: 17]
+  -q --squelch=<sq>        Set squelch [default: 0]
 """
 import sys
 import bladeRF
@@ -35,12 +37,15 @@ if __name__ == '__main__':
     device.rx.bandwidth = int(args['--bandwidth'])
     device.rx.sample_rate = int(args['--sample-rate'])
     device.lna_gain = getattr(bladeRF, args['--lna-gain'])
+    device.rx.vga1 = int(args['--vga1-gain'])
+    device.rx.vga2 = int(args['--vga2-gain'])
     squelch = float(args['--squelch'])
 
     def rx(device, stream, meta_data, samples, num_samples, user_data):
+        samples = bladeRF.samples_to_narray(samples, num_samples)
         if bladeRF.squelched(samples, squelch):
             return stream.current()
-        outfile.write(stream.current_buffer())
+        outfile.write(stream.current_as_buffer())
         return stream.next()
 
     stream = device.rx.stream(

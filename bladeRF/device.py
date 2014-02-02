@@ -21,31 +21,20 @@ This condition from the documents still holds:
 
     def __init__(self, device, module, callback,
                  num_buffers, format, num_samples,
-                 num_transfers, user_data=None,
-                 as_complex=True):
+                 num_transfers, user_data=None):
         Thread.__init__(self)
         self.running = True
         self.current_buff = 0
         self.num_buffers = num_buffers
         self.device = device
         self.module = module
-        self.as_complex = as_complex
 
         @bladeRF.ffi.callback('bladerf_stream_cb')
         def raw_callback(raw_device, raw_stream, meta, raw_samples, num_samples, user_data):
-            if self.as_complex:
-                samples = bladeRF.samples_to_narray(raw_samples, num_samples)
-            else:
-                samples = raw_samples
-
             user_data = bladeRF.ffi.from_handle(user_data)
-            v = callback(self.device, self, meta, samples, num_samples, user_data)
+            v = callback(self.device, self, meta, raw_samples, num_samples, user_data)
             if v is None:
                 return bladeRF.ffi.NULL
-            # if it's the buffer we created, return the original raw one
-            # mutating the narray it has no effect if as_complex = True!
-            if v is samples:
-                return raw_samples
             return v
 
         self.num_samples = num_samples
@@ -68,7 +57,7 @@ This condition from the documents still holds:
     def current(self):
         return self.buffers[self.current_buff]
 
-    def current_buffer(self):
+    def current_as_buffer(self):
         return bladeRF.ffi.buffer(self.current(), self.num_samples*sample_size)
 
     def run(self):
@@ -115,6 +104,34 @@ class Module(object):
     @sample_rate.setter
     def sample_rate(self, sample_rate):
         bladeRF.set_sample_rate(self.raw_device, self.module, sample_rate)
+
+    @property
+    def vga1(self):
+        if self.module == bladeRF.MODULE_RX:
+            return bladeRF.get_rxvga1(self.raw_device)
+        else:
+            return bladeRF.get_txvga1(self.raw_device)
+
+    @vga1.setter
+    def vga1(self, gain):
+        if self.module == bladeRF.MODULE_RX:
+            return bladeRF.set_rxvga1(self.raw_device, gain)
+        else:
+            return bladeRF.set_txvga1(self.raw_device, gain)
+
+    @property
+    def vga2(self):
+        if self.module == bladeRF.MODULE_RX:
+            return bladeRF.get_rxvga2(self.raw_device)
+        else:
+            return bladeRF.get_txvga2(self.raw_device)
+
+    @vga2.setter
+    def vga2(self, gain):
+        if self.module == bladeRF.MODULE_RX:
+            return bladeRF.set_rxvga2(self.raw_device, gain)
+        else:
+            return bladeRF.set_txvga2(self.raw_device, gain)
 
     @property
     def transfer_timeout(self):
