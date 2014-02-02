@@ -61,9 +61,9 @@ def get_stream(args):
     return stream
 
 
-def main(stream):
-    stream.run()
+def main():
+    get_stream(get_args()).run()
 
 
 if __name__ == '__main__':
-    main(get_stream(get_args()))
+    main()
