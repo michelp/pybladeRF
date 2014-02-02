@@ -20,7 +20,16 @@ setup(
   long_description=__doc__,
   license='LGPL v3',
   url='https://github.com/michelp/pyczmq',
-      install_requires=[
+  install_requires=[
         'cffi',
+        'docopt',
         ],
+  entry_points = {
+        'console_scripts' : [
+            'pyblade-rx = bladeRF.tools.rx:main',
+            'pyblade-tx = bladeRF.tools.tx:main',
+            'pyblade-repeater = bladeRF.tools.repeater:main',
+            'pyblade-baudline = bladeRF.tools.bline:main',
+            ]
+        },
 )

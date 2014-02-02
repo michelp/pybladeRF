@@ -23,7 +23,7 @@ from numpy import vdot, log10
 from docopt import docopt
 
 
-if __name__ == '__main__':
+def main():
     args = docopt(__doc__, version='bladeRF Transmitter 1.0')
     infile = sys.stdin if args['--file'] == '-' else open(args['--file'], 'rb')
 
@@ -49,4 +49,5 @@ if __name__ == '__main__':
     stream.run()
 
 
-
+if __name__ == '__main__':
+    main()

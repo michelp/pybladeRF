@@ -39,7 +39,7 @@ class Repeater(object):
         self.samples_available = threading.Condition()
 
 
-if __name__ == '__main__':
+def main():
     args = docopt(__doc__, version='bladeRF Repeater 1.0')
     device = bladeRF.Device(args['--device'])
 
@@ -120,3 +120,6 @@ if __name__ == '__main__':
     rx_stream.join()
     tx_stream.join()
     sys.exit(0)
+
+if __name__ == '__main__':
+    main()

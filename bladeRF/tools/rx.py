@@ -17,8 +17,8 @@ Options:
   -t --num-transfers=<nt>  Number of transfers [default: 1].
   -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 4096].
   -g --lna-gain=<lg>       Set LNA gain [default: LNA_GAIN_MAX]
-  -o --vga1-gain=<lg>      Set vga1 [default: 21]
-  -w --vga2-gain=<sq>      Set vga2 squelch [default: 17]
+  -o --rx-vga1=<lg>      Set vga1 [default: 21]
+  -w --rx-vga2=<sq>      Set vga2 squelch [default: 17]
   -q --squelch=<sq>        Set squelch [default: 0]
 """
 import sys
@@ -26,8 +26,11 @@ import bladeRF
 from docopt import docopt
 
 
-if __name__ == '__main__':
-    args = docopt(__doc__, version='bladeRF Receiver 1.0')
+def get_args():
+    return docopt(__doc__, version='bladeRF Receiver 1.0')
+
+
+def get_stream(args):
     outfile = sys.stdout if args['--file'] == '-' else open(args['--file'], 'wb')
 
     device = bladeRF.Device(args['--device'])
@@ -37,8 +40,8 @@ if __name__ == '__main__':
     device.rx.bandwidth = int(args['--bandwidth'])
     device.rx.sample_rate = int(args['--sample-rate'])
     device.lna_gain = getattr(bladeRF, args['--lna-gain'])
-    device.rx.vga1 = int(args['--vga1-gain'])
-    device.rx.vga2 = int(args['--vga2-gain'])
+    device.rx.vga1 = int(args['--rx-vga1'])
+    device.rx.vga2 = int(args['--rx-vga2'])
     squelch = float(args['--squelch'])
 
     def rx(device, stream, meta_data, samples, num_samples, user_data):
@@ -55,8 +58,12 @@ if __name__ == '__main__':
         int(args['--num-samples']),
         int(args['--num-transfers']),
         )
+    return stream
 
+
+def main(stream):
     stream.run()
 
 
-
+if __name__ == '__main__':
+    main(get_stream(get_args()))
