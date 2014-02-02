@@ -13,9 +13,9 @@ Options:
   -f --file=<f>            File to write samples to [default: -].
   -b --bandwidth=<bw>      Bandwidth in Hertz [default: 7000000].
   -s --sample-rate=<sr>    Sample rate in samples per second [default: 10000000].
-  -n --num-buffers=<nb>    Number of transfer buffers [default: 32].
-  -t --num-transfers=<nt>  Number of transfers [default: 1].
-  -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 4096].
+  -n --num-buffers=<nb>    Number of transfer buffers [default: 16].
+  -t --num-transfers=<nt>  Number of transfers [default: 16].
+  -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 8192].
   -g --lna-gain=<lg>       Set LNA gain [default: LNA_GAIN_MAX]
   -o --rx-vga1=<lg>      Set vga1 [default: 21]
   -w --rx-vga2=<sq>      Set vga2 squelch [default: 17]
