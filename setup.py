@@ -29,7 +29,6 @@ setup(
             'pyblade-rx = bladeRF.tools.rx:main',
             'pyblade-tx = bladeRF.tools.tx:main',
             'pyblade-repeater = bladeRF.tools.repeater:main',
-            'pyblade-baudline = bladeRF.tools.bline:main',
             ]
         },
 )
