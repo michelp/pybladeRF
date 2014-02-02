@@ -18,7 +18,7 @@ Options:
   -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 8192].
   -g --lna-gain=<lg>       Set LNA gain [default: LNA_GAIN_MAX]
   -o --rx-vga1=<lg>      Set vga1 [default: 21]
-  -w --rx-vga2=<sq>      Set vga2 squelch [default: 17]
+  -w --rx-vga2=<sq>      Set vga2 squelch [default: 18]
   -q --squelch=<sq>        Set squelch [default: 0]
 """
 import sys
