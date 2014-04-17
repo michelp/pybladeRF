@@ -45,8 +45,9 @@ from .data import (
     init_stream,
     stream,
     deinit_stream,
-    # tx,
-    # rx,
+    tx,
+    rx,
+    sync_config,
     )
 
 from .misc import (

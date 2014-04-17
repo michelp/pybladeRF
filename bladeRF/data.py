@@ -102,3 +102,33 @@ def stream(stream, module):
 def deinit_stream(stream):
     _cffi.lib.bladerf_deinit_stream(stream)
 
+
+@cdef("""int bladerf_sync_config(struct bladerf *dev,
+                                 bladerf_module module,
+                                 bladerf_format format,
+                                 unsigned int num_buffers,
+                                 unsigned int buffer_size,
+                                 unsigned int num_transfers,
+                                 unsigned int stream_timeout);""")
+def sync_config(dev, module, format, num_buffers, buffer_size, num_transfers, stream_timeout):
+    err = _cffi.lib.bladerf_sync_config(dev, module, format, num_buffers, buffer_size, num_transfers, stream_timeout)
+    bladeRF.errors.check_retcode(err)
+
+
+@cdef("""int bladerf_sync_tx(struct bladerf *dev,
+                            void *samples, unsigned int num_samples,
+                            struct bladerf_metadata *metadata,
+                            unsigned int timeout_ms);""")
+def tx(dev, samples, num_samples, metadata, timeout_ms):
+    err = _cffi.lib.bladerf_sync_tx(dev, samples, num_samples, metadata, timeout_ms)
+    bladeRF.errors.check_retcode(err)
+
+
+@cdef("""int bladerf_sync_rx(struct bladerf *dev,
+                             void *samples, unsigned int num_samples,
+                             struct bladerf_metadata *metadata,
+                             unsigned int timeout_ms);""")
+def rx(dev, samples, num_samples, metadata, timeout_ms):
+    err = _cffi.lib.bladerf_sync_rx(dev, samples, num_samples, metadata, timeout_ms)
+    bladeRF.errors.check_retcode(err)
+

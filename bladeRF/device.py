@@ -139,6 +139,20 @@ class Module(object):
                       num_buffers, format, num_samples,
                       num_transfers, user_data=user_data)
 
+    def config(self, format, num_buffers, buffer_size, num_transfers, stream_timeout=0):
+        return bladeRF.sync_config(self.raw_device, self.module, format, num_buffers,
+                                   buffer_size, num_transfers, stream_timeout)
+
+    def __call__(self, num_samples, samples=None, metadata=bladeRF.ffi.NULL, timeout_ms=0):
+        if samples is None:
+            samples = bladeRF.ffi.new('int16_t[%s]' % (2 * num_samples))
+        if self.module == bladeRF.MODULE_RX:
+            func = bladeRF.rx
+        else:
+            func = bladeRF.tx
+        func(self.raw_device, bladeRF.ffi.cast('void *', samples), num_samples, metadata, timeout_ms)
+        return samples
+
 
 class Device(object):
 

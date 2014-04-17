@@ -3,6 +3,8 @@ import bladeRF
 
 def test_device():
     device = bladeRF.Device()
+    device.rx.config(bladeRF.FORMAT_SC16_Q12, 64, 16384, 16, 3500)
+    device.tx.config(bladeRF.FORMAT_SC16_Q12, 64, 16384, 16, 3500)
     device.rx.enabled = True
     device.tx.enabled = True
 
@@ -20,9 +22,9 @@ def test_device():
     device.tx.sample_rate = 2**20
     assert device.tx.sample_rate == 2**20
 
-    raw = device.rx(bladeRF.FORMAT_SC16_Q12, 1024)
+    raw = device.rx(1024)
     samples = bytearray(bladeRF.ffi.buffer(raw))
     assert isinstance(samples, bytearray)
     assert len(samples) == 4096
 
-    device.tx(bladeRF.FORMAT_SC16_Q12, samples, 1024)
+    device.tx(1024, raw)
