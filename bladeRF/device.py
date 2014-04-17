@@ -133,20 +133,11 @@ class Module(object):
         else:
             return bladeRF.set_txvga2(self.raw_device, gain)
 
-    @property
-    def transfer_timeout(self):
-        return bladeRF.get_transfer_timeout(self.raw_device, self.module)
-
-    @transfer_timeout.setter
-    def transfer_timeout(self, timeout):
-        bladeRF.set_transfer_timeout(self.raw_device, self.module, timeout)
-
     def stream(self, callback, num_buffers, format, num_samples,
                num_transfers, user_data=None):
         return Stream(self, self.module, callback,
                       num_buffers, format, num_samples,
                       num_transfers, user_data=user_data)
-        
 
 
 class Device(object):

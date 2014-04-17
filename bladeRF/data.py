@@ -52,8 +52,9 @@ typedef void *(*bladerf_stream_cb)(struct bladerf *dev,
 
 
 struct bladerf_metadata {
-    uint32_t version;       /**< Metadata format version */
     uint64_t timestamp;     /**< Timestamp (TODO format TBD) */
+    uint32_t flags;         /**< Metadata format flags */
+    uint32_t status;         /**< Metadata format status */
 };
 
 """)
@@ -101,22 +102,3 @@ def stream(stream, module):
 def deinit_stream(stream):
     _cffi.lib.bladerf_deinit_stream(stream)
 
-
-@cdef('int bladerf_tx(struct bladerf *dev, bladerf_format format,'
-      'void *samples, int num_samples, struct bladerf_metadata *metadata);')
-def tx(dev, format, samples, num_samples, metadata=None):
-    if metadata is None:
-        metadata = ffi.new('struct bladerf_metadata*')  #  currently unused
-    err = _cffi.lib.bladerf_tx(dev, format, str(samples), num_samples, metadata)
-    bladeRF.errors.check_retcode(err)
-
-
-@cdef('int bladerf_rx(struct bladerf *dev, bladerf_format format,'
-      'void *samples, int num_samples, struct bladerf_metadata *metadata);')
-def rx(dev, format, num_samples, metadata=None):
-    if metadata is None:
-        metadata = ffi.new('struct bladerf_metadata*')
-    samples = ffi.new('int16_t[]', 2 * num_samples)
-    err = _cffi.lib.bladerf_rx(dev, format, samples, num_samples, metadata)
-    bladeRF.errors.check_retcode(err)
-    return samples

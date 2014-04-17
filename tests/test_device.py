@@ -12,8 +12,6 @@ def test_device():
     assert device.rx.bandwidth == 1500000
     device.rx.sample_rate = 2**21
     assert device.rx.sample_rate == 2**21
-    device.rx.transfer_timeout = 10000
-    assert device.rx.transfer_timeout == 10000
 
     device.tx.frequency = 1234000000
     assert device.tx.frequency == 1234000000

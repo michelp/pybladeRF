@@ -23,6 +23,7 @@ setup(
   install_requires=[
         'cffi',
         'docopt',
+        'nose',
         ],
   entry_points = {
         'console_scripts' : [

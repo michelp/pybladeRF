@@ -16,17 +16,6 @@ typedef enum {
 } bladerf_sampling;
 
 typedef enum {
-    BLADERF_LB_BB_LPF = 0,   /**< Baseband loopback enters before RX low-pass filter input */
-    BLADERF_LB_BB_VGA2,      /**< Baseband loopback enters before RX VGA2 input */
-    BLADERF_LB_BB_OP,        /**< Baseband loopback enters before RX ADC input */
-    BLADERF_LB_RF_LNA_START, /**< Placeholder - DO NOT USE */
-    BLADERF_LB_RF_LNA1,      /**< RF loopback enters at LNA1 (300MHz - 2.8GHz)*/
-    BLADERF_LB_RF_LNA2,      /**< RF loopback enters at LNA2 (1.5GHz - 3.8GHz)*/
-    BLADERF_LB_RF_LNA3,      /**< RF loopback enters at LNA3 (300MHz - 3.0GHz)*/
-    BLADERF_LB_NONE          /**< Null loopback mode*/
-} bladerf_loopback;
-
-typedef enum {
     BLADERF_LNA_GAIN_UNKNOWN,    /**< Invalid LNA gain */
     BLADERF_LNA_GAIN_BYPASS,     /**< LNA bypassed - 0dB gain */
     BLADERF_LNA_GAIN_MID,        /**< LNA Mid Gain (MAX-6dB) */
@@ -45,12 +34,6 @@ typedef enum {
       'bladerf_module m, bool enable);')
 def enable_module(dev, module, enable):
     err = _cffi.lib.bladerf_enable_module(dev, module, enable)
-    bladeRF.errors.check_retcode(err)
-
-
-@cdef('int bladerf_set_loopback(struct bladerf *dev, bladerf_loopback l);')
-def set_loopback(dev, l):
-    err = _cffi.lib.bladerf_set_loopback(dev, l)
     bladeRF.errors.check_retcode(err)
 
 

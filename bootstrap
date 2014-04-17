@@ -1,3 +1,3 @@
-virtualenv .virt --distribute  --system-site-packages
+virtualenv .virt --distribute
 . .virt/bin/activate
 python setup.py develop

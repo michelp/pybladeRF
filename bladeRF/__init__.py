@@ -45,13 +45,8 @@ from .data import (
     init_stream,
     stream,
     deinit_stream,
-    tx,
-    rx,
-    )
-
-from .low_level import (
-    get_transfer_timeout,
-    set_transfer_timeout,
+    # tx,
+    # rx,
     )
 
 from .misc import (
@@ -74,6 +69,8 @@ import bladeRF._cffi
 
 ffi.cdef("""
 float* samples_to_floats(void*, int);
+
+void free(void *ptr);
 """)
 
 bladeRF._cffi.lib = lib = ffi.verify("""
@@ -94,19 +91,27 @@ float* samples_to_floats(void *samples, int num_samples) {
     }
     return buffer;
 }
-    
+
 """, libraries=['bladeRF'])
 
-samples_to_floats = lib.samples_to_floats
+
+def samples_to_floats(samples, num_samples):
+    """Call optimized C function to alocate and return pointer to
+    buffer full of normalized I/Q floats.
+    """
+    return ffi.gc(lib.samples_to_floats(samples, num_samples), lib.free)
+
 
 def to_float_buffer(raw_samples, num_samples):
+    """Return an FFI buffer of I/Q floats."""
     return bladeRF.ffi.buffer(samples_to_floats(raw_samples, num_samples), num_samples*bladeRF.ffi.sizeof('float'))
 
 
 if has_numpy:
     def samples_to_narray(samples, num_samples):
+        """Return a numpy array of type complex64 from the samples."""
         return np.frombuffer(to_float_buffer(samples, num_samples), np.complex64)
-        
+
 
 MODULE_TX = lib.BLADERF_MODULE_TX
 MODULE_RX = lib.BLADERF_MODULE_RX
@@ -114,15 +119,6 @@ MODULE_RX = lib.BLADERF_MODULE_RX
 SAMPLING_UNKNOWN = lib.BLADERF_SAMPLING_UNKNOWN
 SAMPLING_INTERNAL = lib.BLADERF_SAMPLING_INTERNAL
 SAMPLING_EXTERNAL = lib.BLADERF_SAMPLING_EXTERNAL
-
-LB_BB_LPF = lib.BLADERF_LB_BB_LPF
-LB_BB_VGA2 = lib.BLADERF_LB_BB_VGA2
-LB_BB_OP = lib.BLADERF_LB_BB_OP
-LB_RF_LNA_START = lib.BLADERF_LB_RF_LNA_START
-LB_RF_LNA1 = lib.BLADERF_LB_RF_LNA1
-LB_RF_LNA2 = lib.BLADERF_LB_RF_LNA2
-LB_RF_LNA3 = lib.BLADERF_LB_RF_LNA3
-LB_NONE = lib.BLADERF_LB_NONE
 
 LNA_GAIN_UNKNOWN = lib.BLADERF_LNA_GAIN_UNKNOWN
 LNA_GAIN_BYPASS = lib.BLADERF_LNA_GAIN_BYPASS
@@ -146,23 +142,27 @@ LOG_LEVEL_SILENT = lib.BLADERF_LOG_LEVEL_SILENT
 
 from .errors import (
     BladeRFException,
-    UnexpectedError, 
-    RangeError, 
-    InvalError, 
-    MemError, 
+    UnexpectedError,
+    RangeError,
+    InvalError,
+    MemError,
     BladeIOError,
-    TimeoutError, 
-    NodevError, 
-    UnsupportedError, 
-    MisalignedError, 
+    TimeoutError,
+    NodevError,
+    UnsupportedError,
+    MisalignedError,
     ChecksumError,
     )
-    
+
 from device import (
     Device,
     )
 
 
+def power(samples):
+    return 10*np.log10(np.abs(np.vdot(samples, samples)))
+
+
 def squelched(samples, level):
-    return 10*np.log10(np.abs(np.vdot(samples, samples))) < level
+    return power(samples) < level
 

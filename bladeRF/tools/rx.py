@@ -16,10 +16,11 @@ Options:
   -n --num-buffers=<nb>    Number of transfer buffers [default: 16].
   -t --num-transfers=<nt>  Number of transfers [default: 16].
   -l --num-samples=<ns>    Numper of samples per transfer buffer [default: 8192].
-  -g --lna-gain=<lg>       Set LNA gain [default: LNA_GAIN_MAX]
-  -o --rx-vga1=<lg>      Set vga1 [default: 21]
-  -w --rx-vga2=<sq>      Set vga2 squelch [default: 18]
+  -g --lna-gain=<g>        Set LNA gain [default: LNA_GAIN_MAX]
+  -o --rx-vga1=<g>         Set vga1 [default: 21]
+  -w --rx-vga2=<g>         Set vga2 squelch [default: 18]
   -q --squelch=<sq>        Set squelch [default: 0]
+  -e --decimate=<f>        Decimate factor [default: 0]
 """
 import sys
 import bladeRF
@@ -32,9 +33,7 @@ def get_args():
 
 def get_stream(args):
     outfile = sys.stdout if args['--file'] == '-' else open(args['--file'], 'wb')
-
     device = bladeRF.Device(args['--device'])
-
     device.rx.enabled = True
     device.rx.frequency = int(args['<frequency>'])
     device.rx.bandwidth = int(args['--bandwidth'])
@@ -45,11 +44,21 @@ def get_stream(args):
     squelch = float(args['--squelch'])
 
     def rx(device, stream, meta_data, samples, num_samples, user_data):
-        samples = bladeRF.samples_to_narray(samples, num_samples)
-        if bladeRF.squelched(samples, squelch):
-            return stream.current()
-        outfile.write(stream.current_as_buffer())
-        return stream.next()
+        if not squelch or decimate:
+            # pass through, don't bother converting to numpy
+            buff = stream.current_as_buffer()
+            outfile.write(buff)
+            return stream.next()
+            
+        if squelch:
+            samples = bladeRF.samples_to_narray(samples, num_samples)
+            if bladeRF.squelched(samples, squelch):
+                return stream.current()
+
+        if decimate:
+            samples = bladeRF.samples_to_narray(samples, num_samples)
+            if bladeRF.squelched(samples, squelch):
+                return stream.current()
 
     stream = device.rx.stream(
         rx,
