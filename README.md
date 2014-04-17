@@ -19,39 +19,19 @@ where you can use the library.
 
 If you want to run the tests, do 'python setup.py test'
 
+See the tests directory for some example usage of the python API.
 
-Usage
+
+Tools
 =====
 
-Here's a brief example from a test:
+The pybladeRF package installs some command line tools.
 
-    import bladeRF
+  pyblade-rx:  An I/Q receiver, writes to file or stdout
 
-    def test_device():
-        device = bladeRF.Device()
-        device.rx.enabled = True
-        device.tx.enabled = True
+  pyblade-tx: An I/Q transmitter, reads from file or stdin
 
-        device.rx.frequency = 2**28
-        assert device.rx.frequency == 2**28
-        device.rx.bandwidth = 1500000
-        assert device.rx.bandwidth == 1500000
-        device.rx.sample_rate = 2**21
-        assert device.rx.sample_rate == 2**21
-        device.rx.transfer_timeout = 10000
-        assert device.rx.transfer_timeout == 10000
+  pyblade-repeater:  A repeater, everything that is received is retransmitted.
 
-        device.tx.frequency = 1234000000
-        assert device.tx.frequency == 1234000000
-        device.tx.bandwidth = 1500000
-        assert device.tx.bandwidth == 1500000
-        device.tx.sample_rate = 2**20
-        assert device.tx.sample_rate == 2**20
-
-        samples = device.rx(bladeRF.FORMAT_SC16_Q12, 1024)
-        assert isinstance(samples, bytearray)
-        assert len(samples) == 4096
-
-        device.tx(bladeRF.FORMAT_SC16_Q12, samples, 1024)
-
-
+  Check out the tools package for source code, all 3 programs use the
+  asynchronous streaming API.
