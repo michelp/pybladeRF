@@ -105,7 +105,7 @@ def samples_to_floats(samples, num_samples):
 
 def to_float_buffer(raw_samples, num_samples):
     """Return an FFI buffer of I/Q floats."""
-    return bladeRF.ffi.buffer(samples_to_floats(raw_samples, num_samples), num_samples*bladeRF.ffi.sizeof('float'))
+    return bladeRF.ffi.buffer(samples_to_floats(raw_samples, num_samples), 2*num_samples*bladeRF.ffi.sizeof('float'))
 
 
 if has_numpy:

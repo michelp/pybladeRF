@@ -23,6 +23,8 @@ def test_device():
     assert device.tx.sample_rate == 2**20
 
     raw = device.rx(1024)
+    array = bladeRF.samples_to_narray(raw, 1024)
+    assert len(array) == 1024
     samples = bytearray(bladeRF.ffi.buffer(raw))
     assert isinstance(samples, bytearray)
     assert len(samples) == 4096
