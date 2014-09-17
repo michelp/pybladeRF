@@ -55,10 +55,10 @@ def get_stream(args):
             if bladeRF.squelched(samples, squelch):
                 return stream.current()
 
-        if decimate:
-            samples = bladeRF.samples_to_narray(samples, num_samples)
-            if bladeRF.squelched(samples, squelch):
-                return stream.current()
+        buff = stream.current_as_buffer()
+        outfile.write(buff)
+        return stream.next()
+
 
     stream = device.rx.stream(
         rx,
