@@ -1,4 +1,4 @@
-import pyqtgraph as pg/
+import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui
 import scipy.ndimage as ndi
 import numpy as np
