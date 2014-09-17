@@ -1,4 +1,4 @@
-import pyqtgraph as pg
+import pyqtgraph as pg/
 from pyqtgraph.Qt import QtCore, QtGui
 import scipy.ndimage as ndi
 import numpy as np
@@ -13,8 +13,6 @@ import bladeRF
 device = bladeRF.Device()
 device.rx.config(bladeRF.FORMAT_SC16_Q12, 64, 16384, 16, 3500)
 device.rx.enabled = True
-
-device.lna_gain = bladeRF.LNA_GAIN_MAX
 
 Nf = 512     # No. of frames
 Ns = 1000    # Signal length
@@ -76,11 +74,6 @@ def change(param, changes):
             childName = '.'.join(path)
         else:
             childName = param.name()
-        print('  parameter: %s'% childName)
-        print('  change:    %s'% change)
-        print('  data:      %s'% str(data))
-        print('  ----------')
-
         if childName.startswith('Frequency'):
             device.rx.frequency = data
         elif childName.startswith('Bandwidth'):
