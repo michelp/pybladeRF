@@ -44,12 +44,6 @@ def get_stream(args):
     squelch = float(args['--squelch'])
 
     def rx(device, stream, meta_data, samples, num_samples, user_data):
-        if not squelch or decimate:
-            # pass through, don't bother converting to numpy
-            buff = stream.current_as_buffer()
-            outfile.write(buff)
-            return stream.next()
-            
         if squelch:
             samples = bladeRF.samples_to_narray(samples, num_samples)
             if bladeRF.squelched(samples, squelch):

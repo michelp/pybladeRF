@@ -1,5 +1,7 @@
 import pyqtgraph as pg
+import Queue
 from pyqtgraph.Qt import QtCore, QtGui
+from PyQt4.QtCore import QObject, pyqtSignal, Qt
 import scipy.ndimage as ndi
 import numpy as np
 
@@ -11,12 +13,18 @@ from scipy import signal
 import bladeRF
 
 device = bladeRF.Device()
-device.rx.config(bladeRF.FORMAT_SC16_Q12, 64, 16384, 16, 3500)
 device.rx.enabled = True
+device.rx.frequency = 440000000
+device.rx.bandwidth = 28000000
+device.rx.sample_rate = 40000000
 
+
+
+num_buffers = 16
+num_transfers = 16
+num_samples = 2**16
 Nf = 512     # No. of frames
 Ns = 1000    # Signal length
-num_samples = 2**18
 
 params = [
     {'name': 'Frequency',
@@ -29,12 +37,18 @@ params = [
       },
      ]},
 
-    {'name': 'Bandwidth', 'type': 'group', 'children': [
-        {'name': 'Mhz',
-         'type': 'int',
-         'value': device.rx.bandwidth},
-        ]},
-
+    {'name': 'Bandwidth',
+     'type': 'group',
+     'children': [
+         {
+             'name': 'Mhz',
+             'type': 'int',
+             'value': device.rx.bandwidth,
+             'step': 1,
+             'dec': True,
+         },
+     ]},
+    
     {'name': 'Sample Rate', 'type': 'group', 'children': [
         {'name': 'Mhz',
          'type': 'int',
@@ -67,7 +81,6 @@ p = Parameter.create(name='params', type='group', children=params)
 
 ## If anything changes in the tree, print a message
 def change(param, changes):
-    print("tree changes:")
     for param, change, data in changes:
         path = p.childPath(param)
         if path is not None:
@@ -106,20 +119,21 @@ Arx = np.zeros([Nf, Ns])
 inwin = pg.ImageView(view=pg.PlotItem())
 inwin.setImage(Arx, scale=[2, 2])
 
+queue = Queue.Queue(num_buffers)
+
 def update():
     global Arx
     Arx = np.roll(Arx, 1, axis=0)
-    samples = bladeRF.samples_to_narray(device.rx(num_samples), num_samples)
-    f, fft = signal.periodogram(samples, window='flattop', scaling='spectrum', nfft=Ns)
+    try:
+        samples = queue.get_nowait()
+    except Queue.Empty:
+        return
+    f, fft = signal.periodogram(samples, window='hamming', scaling='density', nfft=Ns)
     fft = 10*np.log10(fft)
     Arx[0] = fft
     inwin.setImage(Arx.T, autoRange=False, scale=[2, 2])
 
-timer = QtCore.QTimer()
-timer.timeout.connect(update)
-timer.start()
-
-layout.addWidget(inwin, 1, 0, 1, 8)
+layout.addWidget(inwin, 1, 0, 1, 10)
 
 #cross hair
 vLine = pg.InfiniteLine(angle=90, movable=False)
@@ -140,14 +154,36 @@ proxy = pg.SignalProxy(inwin.scene.sigMouseMoved, rateLimit=60, slot=mouseMoved)
 
 layout.addWidget(QtGui.QLabel(
     "BladeRF spectrum."), 0,  0, 1, 2)
-layout.addWidget(t, 1, 9, 1, 3)
+layout.addWidget(t, 1, 11, 1, 3)
 
 win.show()
 win.resize(1600,800)
 
+def rx(device, stream, meta_data, samples, num_samples, user_data):
+    samples = bladeRF.samples_to_narray(samples, num_samples)
+    try:
+        queue.put_nowait(samples)
+    except Queue.Full:
+        pass
+    return stream.next()
+
+stream = device.rx.stream(
+    rx,
+    num_buffers,
+    bladeRF.FORMAT_SC16_Q12,
+    num_samples,
+    num_transfers,
+)
+
+timer = QtCore.QTimer()
+timer.timeout.connect(update)
+timer.start()
+stream.start()
 
 ## Start Qt event loop unless running in interactive mode or using pyside.
 if __name__ == '__main__':
     import sys
     if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
         QtGui.QApplication.instance().exec_()
+        stream.running = False
+        stream.join()
