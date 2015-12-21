@@ -94,7 +94,7 @@ def main():
     rx_stream = device.rx.stream(
         rx,
         num_buffers,
-        bladeRF.FORMAT_SC16_Q12,
+        bladeRF.FORMAT_SC16_Q11,
         num_samples,
         num_transfers,
         repeater)
@@ -102,7 +102,7 @@ def main():
     tx_stream = device.tx.stream(
         tx,
         num_buffers,
-        bladeRF.FORMAT_SC16_Q12,
+        bladeRF.FORMAT_SC16_Q11,
         num_samples,
         num_transfers,
         repeater)

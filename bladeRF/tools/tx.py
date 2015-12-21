@@ -42,7 +42,7 @@ def main():
     stream = device.tx.stream(
         tx,
         int(args['--num-buffers']),
-        bladeRF.FORMAT_SC16_Q12,
+        bladeRF.FORMAT_SC16_Q11,
         int(args['--num-samples']),
         int(args['--num-transfers']))
 
