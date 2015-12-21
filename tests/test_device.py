@@ -3,8 +3,8 @@ import bladeRF
 
 def test_device():
     device = bladeRF.Device()
-    device.rx.config(bladeRF.FORMAT_SC16_Q12, 64, 16384, 16, 3500)
-    device.tx.config(bladeRF.FORMAT_SC16_Q12, 64, 16384, 16, 3500)
+    device.rx.config(bladeRF.FORMAT_SC16_Q11, 64, 16384, 16, 3500)
+    device.tx.config(bladeRF.FORMAT_SC16_Q11, 64, 16384, 16, 3500)
     device.rx.enabled = True
     device.tx.enabled = True
 

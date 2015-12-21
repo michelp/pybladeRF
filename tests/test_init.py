@@ -5,7 +5,7 @@ def test_init():
 
     with bladeRF.open_device() as device:
         bladeRF.enable_module(device, bladeRF.MODULE_RX, True)
-        bladeRF.sync_config(device, bladeRF.MODULE_RX, bladeRF.FORMAT_SC16_Q12,
+        bladeRF.sync_config(device, bladeRF.MODULE_RX, bladeRF.FORMAT_SC16_Q11,
                             64, 16384, 16, 3500)
         rate = 2**20
         bladeRF.set_sample_rate(device, bladeRF.MODULE_RX, rate)
