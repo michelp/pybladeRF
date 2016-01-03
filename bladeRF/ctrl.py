@@ -28,6 +28,48 @@ typedef enum {
     BLADERF_LPF_DISABLED    /**< LPF disabled */
 } bladerf_lpf_mode;
 
+
+/** Minimum RXVGA1 gain, in dB */
+#define BLADERF_RXVGA1_GAIN_MIN ...
+
+/** Maximum RXVGA1 gain, in dB */
+#define BLADERF_RXVGA1_GAIN_MAX ...
+
+/** Minimum RXVGA2 gain, in dB */
+#define BLADERF_RXVGA2_GAIN_MIN ...
+
+/** Maximum RXVGA2 gain, in dB */
+#define BLADERF_RXVGA2_GAIN_MAX ...
+
+/** Minimum TXVGA1 gain, in dB */
+#define BLADERF_TXVGA1_GAIN_MIN ...
+
+/** Maximum TXVGA1 gain, in dB */
+#define BLADERF_TXVGA1_GAIN_MAX ...
+
+/** Minimum TXVGA2 gain, in dB */
+#define BLADERF_TXVGA2_GAIN_MIN ...
+
+/** Maximum TXVGA2 gain, in dB */
+#define BLADERF_TXVGA2_GAIN_MAX ...
+
+/** Minimum sample rate, in Hz */
+#define BLADERF_SAMPLERATE_MIN ...
+
+/** Maximum recommended sample rate, in Hz */
+#define BLADERF_SAMPLERATE_REC_MAX ...
+
+/** Minimum bandwidth, in Hz */
+#define BLADERF_BANDWIDTH_MIN ...
+
+/** Maximum bandwidth, in Hz */
+#define BLADERF_BANDWIDTH_MAX ...
+
+/** Minimum tunable frequency (without an XB-200 attached), in Hz */
+#define BLADERF_FREQUENCY_MIN ...
+
+/** Maximum tunable frequency, in Hz */
+#define BLADERF_FREQUENCY_MAX ...
 """)
 
 @cdef('int bladerf_enable_module(struct bladerf *dev, '
